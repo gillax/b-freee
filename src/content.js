@@ -267,6 +267,7 @@ function fshRecalculate() {
   const aggregate = aggregateAttendance(extracted.rows, {
     fallbackDailyMinutes: fshSettings.fallbackDailyMinutes,
     workedMinutesOverride: extracted.workedMinutesOverride,
+    workedDaysOverride: extracted.workedDaysOverride,
   });
 
   fshRenderCard(

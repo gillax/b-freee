@@ -49,7 +49,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 120px;
+  min-width: 160px;
 }
 
 .fsh-item__label {
@@ -59,18 +59,17 @@
 
 .fsh-item__value {
   color: #1a2733;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* 所定までの残り時間。まだ余裕がある状態。 */
+/* 分数の分母（"20 日 / 22 日" の右側）は分子より控えめにする。空白 " / " を
+   目印にした ::part は使えないので、テキスト全体を color で表現する。 */
 .fsh-item--remaining .fsh-item__value {
   color: #0b6e8a;
 }
-
-/* 所定を超過している状態。 */
 .fsh-item--over .fsh-item__value {
   color: #b4442f;
 }

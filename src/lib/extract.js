@@ -411,6 +411,7 @@ function extractAttendance(doc) {
         rows,
         unknownRows,
         workedMinutesOverride: null,
+        workedDaysOverride: null,
         schedulePatternHint: '',
         summary,
       };
@@ -424,6 +425,10 @@ function extractAttendance(doc) {
       rows: generic.rows,
       unknownRows: [],
       workedMinutesOverride: generic.workedMinutesOverride,
+      // 行ごとの「総勤務」が取れないので労働日数もサマリーから取る。読めない場合は null
+      // で、そのとき aggregate は 0 を返す（合成行の workedText が空のため）。
+      workedDaysOverride:
+        typeof summary.workedDaysCount === 'number' ? summary.workedDaysCount : null,
       schedulePatternHint: generic.schedulePatternHint,
       summary,
     };
@@ -434,6 +439,7 @@ function extractAttendance(doc) {
     rows: [],
     unknownRows: [],
     workedMinutesOverride: null,
+    workedDaysOverride: null,
     schedulePatternHint: '',
     summary,
   };

@@ -174,9 +174,10 @@ function buildScheduleGroups(workdayRows, fallbackDailyMinutes) {
  * 単純な引き算で freee の「不足時間」と一致する。
  *
  * @param {object[]} rows - RowData の配列
- * @param {{fallbackDailyMinutes?: number, workedMinutesOverride?: number|null}} [options]
- *   workedMinutesOverride は、行ごとの「総勤務」が取れないカレンダー／リスト表示で
- *   サマリーの「総勤務時間」の表示値を使うためのもの（extract.js が渡す）。
+ * @param {{fallbackDailyMinutes?: number, workedMinutesOverride?: number|null,
+ *          workedDaysOverride?: number|null}} [options]
+ *   workedMinutesOverride / workedDaysOverride は、行ごとの「総勤務」が取れない
+ *   カレンダー／リスト表示でサマリーの表示値を使うためのもの（extract.js が渡す）。
  * @returns {object} 集計結果（render.js が表示モデルに変換する）
  */
 function aggregateAttendance(rows, options = {}) {
@@ -223,6 +224,13 @@ function aggregateAttendance(rows, options = {}) {
     Number.isFinite(options.workedMinutesOverride);
   if (usesSummaryWorkedMinutes) {
     workedMinutes = options.workedMinutesOverride;
+  }
+  // 労働日数もカレンダー／リスト表示ではサマリーの表示値で置き換える（同上）。
+  if (
+    typeof options.workedDaysOverride === 'number' &&
+    Number.isFinite(options.workedDaysOverride)
+  ) {
+    workedDays = options.workedDaysOverride;
   }
 
   const scheduleGroups = buildScheduleGroups(workdayRows, fallbackDailyMinutes);

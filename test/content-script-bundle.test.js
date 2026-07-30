@@ -112,7 +112,14 @@ test('content script 経路でもフィクスチャから同じ結果が出る�
   assert.equal(api.formatHoursMinutes(aggregate.scheduledMinutes), '176:00');
   assert.equal(api.formatHoursMinutes(aggregate.remainingMinutes), '9:10');
   assert.equal(model.available, true);
-  assert.equal(model.rows[0].value, '22 日');
+  // 新しい表示形式：「労働日数 20 日 / 22 日」「総勤務時間 166:50 / 176:00」の 2 行
+  assert.deepEqual(
+    model.rows.map((row) => [row.label, row.value]),
+    [
+      ['労働日数', '20 日 / 22 日'],
+      ['総勤務時間', '166:50 / 176:00'],
+    ]
+  );
 });
 
 test('設定ページが読み込むライブラリも require 無しで動く', () => {

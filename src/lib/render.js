@@ -64,14 +64,22 @@ function buildCardModel(input) {
     };
   }
 
+  // 所定を分母、実績を分子にした 2 行にまとめる。実績と所定の差（残り／超過）は
+  // 分数を見れば読み取れるので、独立した「所定まで残り」行は出さない。
+  //   例) 労働日数    20 日 / 22 日
+  //       総勤務時間  166:50 / 176:00
+  const daysOverScheduled = aggregate.workedDays > aggregate.scheduledDays;
+  const timeOverScheduled = aggregate.workedMinutes > aggregate.scheduledMinutes;
   const rows = [
-    { label: '所定労働日数', value: `${aggregate.scheduledDays} 日`, tone: 'normal' },
-    { label: '所定労働時間', value: hm(aggregate.scheduledMinutes), tone: 'normal' },
-    { label: '総勤務時間', value: hm(aggregate.workedMinutes), tone: 'normal' },
     {
-      label: aggregate.isOver ? '所定を超過' : '所定まで残り',
-      value: `${hm(aggregate.remainingMinutes)}（${ja(aggregate.remainingMinutes)}）`,
-      tone: aggregate.isOver ? 'over' : 'remaining',
+      label: '労働日数',
+      value: `${aggregate.workedDays} 日 / ${aggregate.scheduledDays} 日`,
+      tone: daysOverScheduled ? 'over' : 'remaining',
+    },
+    {
+      label: '総勤務時間',
+      value: `${hm(aggregate.workedMinutes)} / ${hm(aggregate.scheduledMinutes)}`,
+      tone: timeOverScheduled ? 'over' : 'remaining',
     },
   ];
 
@@ -79,6 +87,11 @@ function buildCardModel(input) {
   if (summary.periodLabel) {
     // 画面の表示月と実際の勤務期間はずれることがあるので、対象期間を必ず出す。
     meta.push(`対象期間: ${summary.periodLabel}`);
+  }
+  // 分数だけだと残り時間が読み取りづらいので、日本語表記で補助的に出す。
+  if (aggregate.scheduledMinutes > 0) {
+    const label = aggregate.isOver ? '所定を超過' : '所定まで残り';
+    meta.push(`${label}: ${ja(aggregate.remainingMinutes)}`);
   }
   for (const line of describeScheduleGroups(aggregate, input.schedulePatternHint)) {
     meta.push(line);
@@ -97,8 +110,13 @@ function buildCardModel(input) {
     );
   }
 
-  // freee 自身の表示との突き合わせ。超過している月は freee 側の不足時間が 0 になるため比較しない。
-  if (typeof summary.shortageMinutes === 'number' && !aggregate.isOver) {
+  // freee 自身の表示との突き合わせ。超過している月は freee 側の不足時間が 0 になるため
+  // 比較しない。また、所定が 0 の月（休日のみ）は比較する意味がない。
+  if (
+    typeof summary.shortageMinutes === 'number' &&
+    !aggregate.isOver &&
+    aggregate.scheduledMinutes > 0
+  ) {
     if (summary.shortageMinutes === aggregate.remainingMinutes) {
       meta.push('freee 表示の「不足時間」と一致しています。');
     } else {
