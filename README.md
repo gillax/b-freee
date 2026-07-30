@@ -151,8 +151,10 @@ src/lib/render.js        純粋：集計結果 → カードの表示モデル
 test/*.test.js           単体テスト（node:test）
 test-helpers/mini-dom.js 依存ゼロの極小 HTML パーサ（jsdom の代替）
 test-helpers/fixtures/   勤怠画面を模した HTML フィクスチャ（合成データのみ）
+dev/preview.html         実サイトなしで見た目と挙動を確認するローカルプレビュー
 icons/                   アイコン（SVG 原図 + 生成した PNG）
 scripts/make-icons.sh    SVG から PNG を再生成
+scripts/make-preview.js  dev/preview.html を再生成
 ```
 
 ## テストの実行
@@ -176,6 +178,26 @@ node --test
 `test-helpers/mini-dom.js` は**クラスセレクタを解釈しません**。つまりフィクスチャに
 クラス名が付いていてもテストが通るということは、`extract.js` が freee のクラス名に
 依存していない証拠になります。
+
+## 実サイトなしで見た目を確認する（ローカルプレビュー）
+
+freee にログインせずにカードの見た目と再描画時の挙動を確認できます。
+
+```bash
+open dev/preview.html    # macOS。Windows / Linux はブラウザで直接開く
+```
+
+`dev/preview.html` はフィクスチャを埋め込んだ 1 枚の HTML で、`src/` の各スクリプトを
+`manifest.json` と同じ順序で読み込み、`chrome.storage` だけをスタブしています
+（拡張機能のインストールは不要）。
+
+- 画面のプルダウンで 5 種類のフィクスチャ（標準 / 超過 / 勤務予定混在 / 休日のみ /
+  カレンダー表示）を切り替えられます
+- **「再描画」ボタン**で SPA の再描画を再現します。右上の「カードの枚数」が常に 1 なら
+  多重挿入していません
+- **「月を切り替える」ボタン**で `hashchange` を発生させます
+
+フィクスチャを更新したら `node scripts/make-preview.js` で再生成してください。
 
 ## freee の DOM 変更で壊れた場合の修正ポイント
 
