@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "freee 所定労働時間カード",
+  "version": "0.1.0",
+  "description": "freee 人事労務の勤怠編集画面に、所定労働日数・所定労働時間・所定までの残り時間を表示します。計算はすべてブラウザ内で完結し、外部送信はありません。",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://p.secure.freee.co.jp/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://p.secure.freee.co.jp/attendances*"],
+      "js": [
+        "src/lib/time.js",
+        "src/lib/config.js",
+        "src/lib/aggregate.js",
+        "src/lib/extract.js",
+        "src/lib/render.js",
+        "src/content.js"
+      ],
+      "css": ["src/styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    },
+    "default_title": "freee 所定労働時間カード — 設定",
+    "default_popup": "src/options.html"
+  },
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
+  }
+}

@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # .github/workflows で SHA 固定している GitHub Actions を追随させる。
+  # 拡張機能本体には npm 依存が無いので、監視対象は github-actions だけ。
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci

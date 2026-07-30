@@ -1,0 +1,12 @@
+このディレクトリのアイコンはすべてこのリポジトリのために書き起こした
+オリジナルのアートワークです（第三者のアイコンセットからの派生物はありません）。
+
+  icons/icon.svg     — 32x32 グリッドの原図（32/48/128 PNG の元）
+  icons/icon-16.svg  — 16x16 専用の簡略版
+
+PNG は scripts/make-icons.sh で SVG から再生成できます。
+
+freee 株式会社のロゴ・商標・ブランドカラーは使用していません。この拡張機能は
+freee 株式会社とは無関係の非公式なツールです。
+
+Licensed under the MIT License (see ../LICENSE).

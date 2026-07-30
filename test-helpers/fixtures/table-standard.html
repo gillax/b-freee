@@ -1,0 +1,373 @@
+<!--
+  標準ケース：所定労働日 22 日 / 所定 176:00 / 総勤務 166:50 / 残り 9:10
+
+  freee 人事労務「勤怠編集」画面のテーブル表示を模したフィクスチャ。
+  クラス名は「本物らしさ」のために付けているだけで、extract.js はこれらを一切
+  参照しない（test-helpers/mini-dom.js はクラスセレクタを解釈しない）。
+-->
+<body>
+  <div class="vb-page">
+    <header class="vb-pageHeader">
+      <h1 class="vb-pageHeader__title">勤怠</h1>
+      <p class="vb-pageHeader__period">2026年8月20日払い（2026年7月1日 〜 2026年7月31日 勤務分）</p>
+    </header>
+
+    <section class="vb-summary">
+        <div class="vb-summary__item">
+          <span class="vb-summary__label">労働日数</span>
+          <span class="vb-summary__value">20日</span>
+        </div>
+        <div class="vb-summary__item">
+          <span class="vb-summary__label">総勤務時間</span>
+          <span class="vb-summary__value">166時間50分</span>
+        </div>
+        <div class="vb-summary__item">
+          <span class="vb-summary__label">時間外労働時間</span>
+          <span class="vb-summary__value">9時間30分</span>
+        </div>
+        <div class="vb-summary__item">
+          <span class="vb-summary__label">不足時間</span>
+          <span class="vb-summary__value">9時間10分</span>
+        </div>
+    </section>
+
+    <div class="vb-tableWrapper">
+      <table class="vb-table">
+        <thead>
+          <tr class="vb-table__row">
+            <th class="vb-table__head" scope="col">日付</th>
+            <th class="vb-table__head" scope="col">勤務日種別</th>
+            <th class="vb-table__head" scope="col">勤務予定</th>
+            <th class="vb-table__head" scope="col">勤怠種別</th>
+            <th class="vb-table__head" scope="col">所定内</th>
+            <th class="vb-table__head" scope="col">時間外</th>
+            <th class="vb-table__head" scope="col">休憩</th>
+            <th class="vb-table__head" scope="col">総勤務</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/01(水)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/02(木)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/03(金)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/04(土)</td>
+            <td class="vb-table__cell">所定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/05(日)</td>
+            <td class="vb-table__cell">法定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/06(月)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/07(火)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/08(水)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/09(木)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/10(金)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/11(土)</td>
+            <td class="vb-table__cell">所定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/12(日)</td>
+            <td class="vb-table__cell">法定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/13(月)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/14(火)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/15(水)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">有休（半休）</td>
+            <td class="vb-table__cell">5:20</td>
+            <td class="vb-table__cell">0:00</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">5:20</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/16(木)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/17(金)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/18(土)</td>
+            <td class="vb-table__cell">所定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/19(日)</td>
+            <td class="vb-table__cell">法定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/20(月)</td>
+            <td class="vb-table__cell">所定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/21(火)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/22(水)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/23(木)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/24(金)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/25(土)</td>
+            <td class="vb-table__cell">所定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/26(日)</td>
+            <td class="vb-table__cell">法定休日</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/27(月)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/28(火)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/29(水)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:30</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:30</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/30(木)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell"></td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/31(金)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">合計</td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell"></td>
+            <td class="vb-table__cell">157:20</td>
+            <td class="vb-table__cell">9:30</td>
+            <td class="vb-table__cell">20:00</td>
+            <td class="vb-table__cell">166:50</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>

@@ -1,0 +1,201 @@
+/*
+ * styles.css — 差し込むカードのスタイルと設定ページのスタイル
+ *
+ * すべてのクラスに fsh-（freee scheduled hours）プレフィックスを付け、
+ * 要素セレクタ（div, ul, … 単独）は一切使わない。freee 側の見た目に
+ * 影響を与えないようにするため。
+ *
+ * 逆に、freee 側のリセット CSS でカードが崩れないよう、必要なプロパティは
+ * すべて明示する（list-style や margin を継承に任せない）。
+ */
+
+.fsh-card {
+  box-sizing: border-box;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid #d8dde3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1a2733;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.fsh-card * {
+  box-sizing: border-box;
+}
+
+.fsh-card__title {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  color: #5b6b7c;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.fsh-card__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+}
+
+.fsh-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+.fsh-item__label {
+  color: #6b7a89;
+  font-size: 11px;
+}
+
+.fsh-item__value {
+  color: #1a2733;
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 所定までの残り時間。まだ余裕がある状態。 */
+.fsh-item--remaining .fsh-item__value {
+  color: #0b6e8a;
+}
+
+/* 所定を超過している状態。 */
+.fsh-item--over .fsh-item__value {
+  color: #b4442f;
+}
+
+.fsh-card__message {
+  margin: 0;
+  padding: 0;
+  color: #6b7a89;
+  font-size: 13px;
+}
+
+.fsh-card__meta,
+.fsh-card__notes {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fsh-card__meta > li,
+.fsh-card__notes > li {
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fsh-card__meta > li {
+  color: #5b6b7c;
+  font-size: 11px;
+}
+
+.fsh-card__notes {
+  padding-top: 8px;
+  border-top: 1px solid #eef1f4;
+}
+
+.fsh-card__notes > li {
+  color: #7a8794;
+  font-size: 11px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 設定ページ（src/options.html）
+ * content script でも読み込まれるが、.fsh-options* は勤怠画面には存在しない。
+ * ------------------------------------------------------------------------ */
+
+.fsh-options {
+  /* ツールバーのポップアップとタブの両方で開くため、幅を固定しつつ画面幅も尊重する。 */
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+  color: #1a2733;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.fsh-options h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.fsh-options h2 {
+  margin: 28px 0 8px;
+  font-size: 15px;
+}
+
+.fsh-options p {
+  margin: 0 0 12px;
+  color: #45525f;
+}
+
+.fsh-options__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.fsh-options__input {
+  width: 120px;
+  padding: 6px 8px;
+  border: 1px solid #c6cdd5;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fsh-options__button {
+  padding: 6px 14px;
+  border: 1px solid #0b6e8a;
+  border-radius: 4px;
+  background: #0b6e8a;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.fsh-options__button--secondary {
+  border-color: #c6cdd5;
+  background: #ffffff;
+  color: #45525f;
+}
+
+.fsh-options__status {
+  min-height: 1.7em;
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.fsh-options__status--ok {
+  color: #0b6e8a;
+}
+
+.fsh-options__status--error {
+  color: #b4442f;
+}
+
+.fsh-options__note {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eef1f4;
+  color: #6b7a89;
+  font-size: 12px;
+}

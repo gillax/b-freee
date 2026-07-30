@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" role="img" aria-label="所定労働時間カード">
+  <!--
+    16x16 専用の簡略版。icon.svg をそのまま縮小すると針が潰れるため、
+    要素を減らして線を太くしている。
+  -->
+  <rect width="16" height="16" rx="3.5" fill="#0b6e8a" />
+  <circle cx="8" cy="8" r="5.4" fill="#ffffff" />
+  <path d="M8 8 L8 2.6 A5.4 5.4 0 0 1 12.7 10.7 Z" fill="#8fd3e4" />
+  <path d="M8 8 L8 4.2" stroke="#0b6e8a" stroke-width="1.6" stroke-linecap="round" fill="none" />
+  <path d="M8 8 L10.9 9.6" stroke="#0b6e8a" stroke-width="1.6" stroke-linecap="round" fill="none" />
+</svg>

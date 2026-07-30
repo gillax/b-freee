@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# ログ / エディタのノイズ
+*.log
+*.swp
+.idea/
+.vscode/
+
+# npm 依存は使わない方針だが、誤ってインストールした場合にコミットしない
+node_modules/
+package-lock.json

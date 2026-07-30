@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>freee 所定労働時間カード — 設定</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="fsh-options">
+      <h1>freee 所定労働時間カード</h1>
+      <p>
+        freee 人事労務の勤怠編集画面に「所定労働日数・所定労働時間・所定までの残り時間」を表示します。
+        計算はすべてブラウザ内で行い、勤怠データを外部に送信することはありません。
+      </p>
+
+      <h2>1 日の所定労働時間（フォールバック値）</h2>
+      <p>
+        通常は勤怠テーブルの「勤務予定」から「開始 − 終了 − 休憩」で 1 日の所定労働時間を計算します。
+        勤務予定が取得できない表示モード（カレンダー / リスト）や、勤務予定が空の場合にだけ、
+        ここで指定した値を使います。
+      </p>
+
+      <div class="fsh-options__field">
+        <label for="fsh-daily">1 日の所定労働時間</label>
+        <input
+          class="fsh-options__input"
+          id="fsh-daily"
+          type="text"
+          inputmode="numeric"
+          placeholder="8:00"
+          aria-describedby="fsh-daily-help"
+        />
+        <button class="fsh-options__button" id="fsh-save" type="button">保存</button>
+        <button class="fsh-options__button fsh-options__button--secondary" id="fsh-reset" type="button">
+          既定値に戻す
+        </button>
+      </div>
+      <p class="fsh-options__status" id="fsh-status" role="status" aria-live="polite"></p>
+      <p id="fsh-daily-help">「8:00」または「8時間0分」の形式で入力してください（0:00 〜 24:00）。</p>
+
+      <p class="fsh-options__note">
+        この拡張機能が出す残り時間は<strong>所定労働時間ベース</strong>の計算です。freee
+        の「残業モニター」は 36 協定（法定労働時間）ベースの予測なので、基準が異なります。
+        設定値は <code>chrome.storage.local</code> にのみ保存され、Google アカウントには同期されません。
+      </p>
+    </main>
+    <script src="lib/time.js"></script>
+    <script src="lib/config.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
