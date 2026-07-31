@@ -6,12 +6,10 @@
  *
  * RowData:
  *   {
- *     dateLabel:          string,  // "07/01(水)" など。表示・デバッグ用
- *     dayType:            string,  // "所定労働日" / "所定休日" / "法定休日"
- *     scheduleText:       string,  // "09:00-18:00"（未設定なら空文字）
- *     breakText:          string,  // "1:00"（未入力なら空文字）
- *     workedText:         string,  // "8:00"（未入力なら空文字）
- *     attendanceTypeText: string,  // "有休（半休）" など（任意）
+ *     dayType:      string,  // "所定労働日" / "所定休日" / "法定休日"
+ *     scheduleText: string,  // "09:00-18:00"（未設定なら空文字）
+ *     breakText:    string,  // "1:00"（未入力なら空文字）
+ *     workedText:   string,  // "8:00"（未入力なら空文字）
  *   }
  */
 
@@ -32,19 +30,6 @@ const DAY_TYPE_LABELS = Object.freeze({
   WORKDAY: '所定労働日',
   PRESCRIBED_HOLIDAY: '所定休日',
   STATUTORY_HOLIDAY: '法定休日',
-});
-
-/** 半休の判定に使う部分文字列（勤怠種別セル。例: "有休（半休）"）。 */
-const HALF_DAY_LABEL = '半休';
-
-/** 集計時の注意点コード。日本語化は render.js が行う。 */
-const WARNING_CODES = Object.freeze({
-  NO_SCHEDULED_WORKDAYS: 'NO_SCHEDULED_WORKDAYS',
-  FALLBACK_SCHEDULE_USED: 'FALLBACK_SCHEDULE_USED',
-  MULTIPLE_SCHEDULES: 'MULTIPLE_SCHEDULES',
-  MISSING_WORKED_ENTRIES: 'MISSING_WORKED_ENTRIES',
-  HOLIDAY_WORK_INCLUDED: 'HOLIDAY_WORK_INCLUDED',
-  WORKED_FROM_SUMMARY: 'WORKED_FROM_SUMMARY',
 });
 
 /**
@@ -165,20 +150,23 @@ function buildScheduleGroups(workdayRows, fallbackDailyMinutes) {
 /**
  * 勤怠行データを集計する。
  *
+ * コピー行が出す「実績 / 所定」の 2 つの分数に必要な 4 つの値だけを返す。
+ *
  * - 所定労働日数 = 勤務日種別が「所定労働日」の行数
  * - 所定労働時間 = 勤務予定グループごとの（日数 × 1 日の所定）の合計
+ * - 労働日数     = 「総勤務」が 0 より大きい行数
  * - 総勤務時間   = 全行の「総勤務」の合計（休日出勤も含む。freee の不足時間と同じ挙動）
- * - 残り         = 所定労働時間 − 総勤務時間（負なら超過）
  *
  * 半休（有休（半休））の日は実働 + 有休分が所定内に計上されて「総勤務」に乗るため、
- * 単純な引き算で freee の「不足時間」と一致する。
+ * 所定との単純な引き算で freee の「不足時間」と一致する（特別扱いは不要）。
  *
  * @param {object[]} rows - RowData の配列
  * @param {{fallbackDailyMinutes?: number, workedMinutesOverride?: number|null,
  *          workedDaysOverride?: number|null}} [options]
  *   workedMinutesOverride / workedDaysOverride は、行ごとの「総勤務」が取れない
  *   カレンダー／リスト表示でサマリーの表示値を使うためのもの（extract.js が渡す）。
- * @returns {object} 集計結果（render.js が表示モデルに変換する）
+ * @returns {{scheduledDays: number, scheduledMinutes: number,
+ *            workedDays: number, workedMinutes: number}}
  */
 function aggregateAttendance(rows, options = {}) {
   const fallbackDailyMinutes =
@@ -187,45 +175,28 @@ function aggregateAttendance(rows, options = {}) {
       : 8 * 60;
 
   const safeRows = Array.isArray(rows) ? rows.filter((row) => row && typeof row === 'object') : [];
-
   const workdayRows = safeRows.filter((row) => isScheduledWorkday(row.dayType));
-  const holidayRows = safeRows.filter((row) => isHoliday(row.dayType));
 
   let workedMinutes = 0;
   let workedDays = 0;
-  let holidayWorkMinutes = 0;
-  let missingWorkedDays = 0;
-  let halfDayCount = 0;
-
   for (const row of safeRows) {
     const minutes = aggregateTimeLib.parseDurationToMinutes(row.workedText);
     if (minutes !== null) {
       workedMinutes += minutes;
       if (minutes > 0) {
         workedDays += 1;
-        if (isHoliday(row.dayType)) {
-          holidayWorkMinutes += minutes;
-        }
       }
-    } else if (isScheduledWorkday(row.dayType)) {
-      // 所定労働日なのに総勤務が未入力 = これから入力される日（または未打刻）。
-      missingWorkedDays += 1;
-    }
-
-    if (aggregateTimeLib.normalizeText(row.attendanceTypeText).includes(HALF_DAY_LABEL)) {
-      halfDayCount += 1;
     }
   }
 
   // カレンダー／リスト表示では行ごとの「総勤務」が取れないため、サマリーの
   // 表示値で置き換える（extract.js が判断して渡す）。
-  const usesSummaryWorkedMinutes =
+  if (
     typeof options.workedMinutesOverride === 'number' &&
-    Number.isFinite(options.workedMinutesOverride);
-  if (usesSummaryWorkedMinutes) {
+    Number.isFinite(options.workedMinutesOverride)
+  ) {
     workedMinutes = options.workedMinutesOverride;
   }
-  // 労働日数もカレンダー／リスト表示ではサマリーの表示値で置き換える（同上）。
   if (
     typeof options.workedDaysOverride === 'number' &&
     Number.isFinite(options.workedDaysOverride)
@@ -233,58 +204,22 @@ function aggregateAttendance(rows, options = {}) {
     workedDays = options.workedDaysOverride;
   }
 
-  const scheduleGroups = buildScheduleGroups(workdayRows, fallbackDailyMinutes);
-  const scheduledMinutes = scheduleGroups.reduce(
+  const scheduledMinutes = buildScheduleGroups(workdayRows, fallbackDailyMinutes).reduce(
     (total, group) => total + group.days * group.dailyMinutes,
     0
   );
-  const differenceMinutes = scheduledMinutes - workedMinutes;
-
-  const warnings = [];
-  if (workdayRows.length === 0) {
-    warnings.push(WARNING_CODES.NO_SCHEDULED_WORKDAYS);
-  }
-  if (scheduleGroups.some((group) => group.usedFallback)) {
-    warnings.push(WARNING_CODES.FALLBACK_SCHEDULE_USED);
-  }
-  if (scheduleGroups.length > 1) {
-    warnings.push(WARNING_CODES.MULTIPLE_SCHEDULES);
-  }
-  if (usesSummaryWorkedMinutes) {
-    // 行ごとの入力状況は判定できないので、未入力日数の警告は出さない。
-    missingWorkedDays = 0;
-    warnings.push(WARNING_CODES.WORKED_FROM_SUMMARY);
-  } else if (missingWorkedDays > 0) {
-    warnings.push(WARNING_CODES.MISSING_WORKED_ENTRIES);
-  }
-  if (holidayWorkMinutes > 0) {
-    warnings.push(WARNING_CODES.HOLIDAY_WORK_INCLUDED);
-  }
 
   return {
-    totalRows: safeRows.length,
     scheduledDays: workdayRows.length,
-    holidayDays: holidayRows.length,
     scheduledMinutes,
-    workedMinutes,
     workedDays,
-    missingWorkedDays,
-    halfDayCount,
-    holidayWorkMinutes,
-    differenceMinutes,
-    isOver: differenceMinutes < 0,
-    remainingMinutes: Math.abs(differenceMinutes),
-    fallbackDailyMinutes,
-    scheduleGroups,
-    warnings,
+    workedMinutes,
   };
 }
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     DAY_TYPE_LABELS,
-    HALF_DAY_LABEL,
-    WARNING_CODES,
     isScheduledWorkday,
     isHoliday,
     modeOf,

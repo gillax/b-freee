@@ -1,8 +1,12 @@
 /**
- * content.js — 勤怠編集画面にカードを差し込む薄い層
+ * content.js — 勤怠編集画面に「並べ替えたサマリー」を差し込む薄い層
  *
  * ここだけが DOM を書き換え、chrome.* を触る。計算とテキスト生成は
  * src/lib/*.js の純粋関数に任せている（そちらは単体テスト済み）。
+ *
+ * やることは 2 つだけ：
+ *   1. freee のサマリーの直前に、表示順を組み替えたコピー行を差し込む
+ *   2. freee の元のサマリーを折りたたむ（消さずに display で隠すだけ）
  *
  * 外部通信は一切しない。読み取った勤怠データはこのページの外に出ない。
  *
@@ -13,8 +17,8 @@
 
 'use strict';
 
-/** カードの要素 ID。冪等な差し替えのキーになる。 */
-const FSH_CARD_ID = 'fsh-card';
+/** 並べ替えたサマリーのコピー行の要素 ID。冪等な差し替えのキーになる。 */
+const FSH_SUMMARY_ID = 'fsh-summary';
 
 /** 再計算のデバウンス幅（ms）。SPA の再描画が落ち着くのを待つ。 */
 const FSH_DEBOUNCE_MS = 150;
@@ -37,21 +41,44 @@ let fshDebounceTimer = null;
 /** 自分の DOM 操作による MutationObserver の再入を防ぐフラグ。 */
 let fshIsRendering = false;
 
+/** display を書き換えて隠している freee の元サマリー。元に戻すために覚えておく。 */
+let fshCollapsedElement = null;
+
+/** 直前に描画したコピー行の表示モデル（差分が無ければ DOM を触らない）。 */
+let fshLastSummaryKey = '';
+
 /**
- * 要素がカードの内側（＝自分が作った DOM）かどうか。
+ * 拡張が作った要素を生成する。
+ *
+ * すべての要素に extract.js の目印（data-fsh）を付ける。これが無いと、
+ * コピー行に出したラベル（「労働日数」「不足時間」…）を freee の表示として
+ * 読み直してしまう（コピー行は元サマリーより前に置くので、テキストの
+ * 出現順でも先に来る）。
+ *
+ * @param {string} tagName
+ * @param {string} [className]
+ * @returns {HTMLElement}
+ */
+function fshCreateElement(tagName, className) {
+  const element = document.createElement(tagName);
+  if (className) {
+    element.className = className;
+  }
+  element.setAttribute(INJECTED_ATTRIBUTE, '');
+  return element;
+}
+
+/**
+ * ノードが自分の作った DOM の内側かどうか。
  *
  * @param {Node | null} node
  * @returns {boolean}
  */
-function fshIsInsideCard(node) {
-  let current = node;
-  while (current) {
-    if (current.nodeType === 1 && current.id === FSH_CARD_ID) {
-      return true;
-    }
-    current = current.parentNode;
+function fshIsOwnNode(node) {
+  if (!node) {
+    return false;
   }
-  return false;
+  return isInjected(node.nodeType === 1 ? node : node.parentElement);
 }
 
 /**
@@ -77,19 +104,19 @@ function fshWithObserverPaused(mutate) {
 /**
  * ラベルと値の 1 項目を作る。
  *
+ * textContent だけを使い innerHTML は使わない（ページの CSP に依存せず、
+ * 読み取ったテキストを HTML として解釈させないため）。
+ *
  * @param {{label: string, value: string, tone: string}} item
  * @returns {HTMLElement}
  */
 function fshCreateItem(item) {
-  const wrapper = document.createElement('div');
-  wrapper.className = `fsh-item fsh-item--${item.tone}`;
+  const wrapper = fshCreateElement('div', `fsh-item fsh-item--${item.tone}`);
 
-  const label = document.createElement('span');
-  label.className = 'fsh-item__label';
+  const label = fshCreateElement('span', 'fsh-item__label');
   label.textContent = item.label;
 
-  const value = document.createElement('span');
-  value.className = 'fsh-item__value';
+  const value = fshCreateElement('span', 'fsh-item__value');
   value.textContent = item.value;
 
   wrapper.append(label, value);
@@ -97,188 +124,155 @@ function fshCreateItem(item) {
 }
 
 /**
- * 文字列の配列を ul として作る。
+ * freee の元サマリーの表示 / 非表示を切り替える。
  *
- * @param {string[]} lines
- * @param {string} className
- * @returns {HTMLElement | null} 空配列なら null
+ * インラインの `display: none !important` で隠す。freee 側のクラスに勝たせるためと、
+ * 元に戻すときにインラインスタイルを消すだけで済ませるため。
+ * React が要素を作り直した場合は、前に隠した要素を先に戻してから新しい要素を隠す。
+ *
+ * @param {Element | null} summary
+ * @param {boolean} collapsed
  */
-function fshCreateList(lines, className) {
-  if (lines.length === 0) {
-    return null;
+function fshSetCollapsed(summary, collapsed) {
+  if (fshCollapsedElement && fshCollapsedElement !== summary) {
+    fshCollapsedElement.style.removeProperty('display');
+    fshCollapsedElement = null;
   }
-  const list = document.createElement('ul');
-  list.className = className;
-  for (const line of lines) {
-    const item = document.createElement('li');
-    item.textContent = line;
-    list.append(item);
+  if (!summary || !summary.style) {
+    return;
   }
-  return list;
+  if (collapsed) {
+    summary.style.setProperty('display', 'none', 'important');
+    fshCollapsedElement = summary;
+  } else if (fshCollapsedElement === summary) {
+    summary.style.removeProperty('display');
+    fshCollapsedElement = null;
+  }
+}
+
+/** 折りたたみ状態を反転して保存する（トグルボタンのクリック）。 */
+function fshToggleCollapsed() {
+  fshSettings = { ...fshSettings, collapseSummary: !fshSettings.collapseSummary };
+  // 保存の完了を待たずに画面へ反映する（保存に失敗してもこのタブでは切り替わる）。
+  fshSafeRecalculate();
+  Promise.resolve(chrome.storage.local.set({ [STORAGE_KEY]: fshSettings })).catch((error) => {
+    console.warn('[freee 所定労働時間] 折りたたみ状態を保存できませんでした:', error);
+  });
 }
 
 /**
- * 表示モデルからカード要素を組み立てる。
+ * 並べ替えたコピー行を組み立てる。
  *
- * textContent だけを使い innerHTML は使わない（ページの CSP に依存せず、
- * 読み取ったテキストを HTML として解釈させないため）。
- *
- * @param {object} model - render.js の buildCardModel の戻り値
+ * @param {object} model - render.js の buildSummaryRowModel の戻り値
  * @returns {HTMLElement}
  */
-function fshCreateCard(model) {
-  const card = document.createElement('section');
-  card.id = FSH_CARD_ID;
-  card.className = 'fsh-card';
+function fshCreateSummaryRow(model) {
+  const row = fshCreateElement('section', 'fsh-summary');
+  row.id = FSH_SUMMARY_ID;
   // freee 側のスクリプトから見て邪魔にならないよう、支援技術向けの情報だけ付ける。
-  card.setAttribute('aria-label', model.title);
+  row.setAttribute('aria-label', model.title);
 
-  const title = document.createElement('h2');
-  title.className = 'fsh-card__title';
-  title.textContent = model.title;
-  card.append(title);
-
-  if (model.available) {
-    const grid = document.createElement('div');
-    grid.className = 'fsh-card__grid';
-    for (const item of model.rows) {
-      grid.append(fshCreateItem(item));
-    }
-    card.append(grid);
-  } else {
-    const message = document.createElement('p');
-    message.className = 'fsh-card__message';
-    message.textContent = model.message;
-    card.append(message);
+  for (const item of model.items) {
+    row.append(fshCreateItem(item));
   }
 
-  const meta = fshCreateList(model.meta, 'fsh-card__meta');
-  if (meta) {
-    card.append(meta);
-  }
-  const notes = fshCreateList(model.notes, 'fsh-card__notes');
-  if (notes) {
-    card.append(notes);
-  }
+  const toggle = fshCreateElement('button', 'fsh-summary__toggle');
+  toggle.type = 'button';
+  toggle.textContent = model.toggleLabel;
+  toggle.setAttribute('aria-expanded', model.collapsed ? 'false' : 'true');
+  toggle.addEventListener('click', fshToggleCollapsed);
+  row.append(toggle);
 
-  return card;
+  return row;
 }
 
-/**
- * カードを挿入すべき位置にカードを置く。
- *
- * 第一候補はサマリー領域（「不足時間」を含む領域）の直後。見つからない場合は
- * ページ先頭の見出しの直後、それも無ければ body の先頭。
- *
- * すでにカードがあれば中身を差し替え、位置がずれていれば移動するだけなので、
- * 何度呼ばれても増殖しない。
- *
- * @param {HTMLElement} card
- */
-function fshPlaceCard(card) {
-  const summary = findSummaryContainer(document);
-  if (summary && summary.parentNode) {
-    if (summary.nextElementSibling !== card) {
-      summary.after(card);
-    }
-    return;
-  }
-
-  const heading = document.querySelector('h1, h2');
-  if (heading && heading.parentNode) {
-    if (heading.nextElementSibling !== card) {
-      heading.after(card);
-    }
-    return;
-  }
-
-  if (card.parentNode !== document.body) {
-    document.body.prepend(card);
-  }
-}
-
-/** 直前に描画した表示モデル（同じ内容なら DOM を触らないための比較用）。 */
-let fshLastModelKey = '';
-
-/**
- * カードを描画（新規挿入 or 差し替え）する。
- *
- * 表示内容が前回と同じで、かつカードが正しい位置にあるなら何もしない。
- * freee 側の再描画と自分の描画が交互に走り続けるのを避けるため。
- *
- * @param {object} model
- */
-function fshRenderCard(model) {
-  const modelKey = JSON.stringify(model);
-  const existing = document.getElementById(FSH_CARD_ID);
-  if (existing && modelKey === fshLastModelKey) {
-    // 位置だけ確認して終わり（サマリー領域が作り直された場合に追随する）。
-    fshWithObserverPaused(() => fshPlaceCard(existing));
-    return;
-  }
-
-  fshWithObserverPaused(() => {
-    const card = fshCreateCard(model);
-    if (existing) {
-      existing.replaceWith(card);
-    }
-    fshPlaceCard(card);
-  });
-  fshLastModelKey = modelKey;
-}
-
-/** カードを取り除く（対象画面から離れたとき）。 */
-function fshRemoveCard() {
-  const existing = document.getElementById(FSH_CARD_ID);
-  if (!existing) {
-    return;
-  }
-  fshWithObserverPaused(() => {
+/** コピー行を取り除き、freee の元サマリーを元に戻す。 */
+function fshRemoveSummaryRow() {
+  const existing = document.getElementById(FSH_SUMMARY_ID);
+  if (existing) {
     existing.remove();
-  });
-  fshLastModelKey = '';
+  }
+  fshSetCollapsed(null, false);
+  fshLastSummaryKey = '';
 }
 
 /**
- * 画面を読み直して再計算し、カードを更新する。
+ * コピー行を描画し、freee の元サマリーを折りたたむ。
+ *
+ * 1 項目も読み取れなかった場合はコピー行を出さず、元サマリーも隠さない
+ * （読めていないのに隠すと、画面から情報が消えるだけになるため）。
+ *
+ * 表示内容が前回と同じなら DOM を作り直さない。freee 側の再描画と自分の描画が
+ * 交互に走り続けるのを避けるため。
+ *
+ * @param {Element|null} summary - freee の元サマリー（findSummaryContainer の戻り値）
+ * @param {Record<string, string>} summaryItems - readSummaryItems の戻り値
+ * @param {object} aggregate - aggregate.js の集計結果
+ */
+function fshRenderSummaryRow(summary, summaryItems, aggregate) {
+  const model = buildSummaryRowModel({
+    aggregate,
+    summaryItems,
+    collapsed: fshSettings.collapseSummary,
+  });
+
+  fshWithObserverPaused(() => {
+    if (!summary || model.items.length === 0) {
+      fshRemoveSummaryRow();
+      return;
+    }
+
+    const modelKey = JSON.stringify(model);
+    let row = document.getElementById(FSH_SUMMARY_ID);
+    if (!row || modelKey !== fshLastSummaryKey) {
+      const next = fshCreateSummaryRow(model);
+      if (row) {
+        row.replaceWith(next);
+      }
+      row = next;
+      fshLastSummaryKey = modelKey;
+    }
+
+    // 元サマリーの直前に置く（サマリー領域が作り直されたら追随する）。
+    if (summary.previousElementSibling !== row) {
+      summary.before(row);
+    }
+    fshSetCollapsed(summary, model.collapsed);
+  });
+}
+
+/** 差し込んだものを取り除く（対象画面から離れたとき）。 */
+function fshRemoveInjections() {
+  if (!document.getElementById(FSH_SUMMARY_ID) && !fshCollapsedElement) {
+    return;
+  }
+  fshWithObserverPaused(fshRemoveSummaryRow);
+}
+
+/**
+ * 画面を読み直して再計算し、コピー行を更新する。
  */
 function fshRecalculate() {
   if (!FSH_TARGET_HASH_PATTERN.test(location.hash)) {
-    // 勤怠編集以外の画面（同じ /attendances 配下の別ルート）ではカードを出さない。
-    fshRemoveCard();
+    // 勤怠編集以外の画面（同じ /attendances 配下の別ルート）では何も出さない。
+    fshRemoveInjections();
     return;
   }
 
-  const extracted = extractAttendance(document);
+  // サマリー領域の特定と値の読み取りは 1 回だけ。コピー行の描画にも、
+  // カレンダー表示の概算（extractAttendance）にも同じ結果を使う。
+  const summary = findSummaryContainer(document);
+  const summaryItems = readSummaryItems(summary, summaryRowLabels());
+  const extracted = extractAttendance(document, summaryItems);
 
-  if (extracted.viewMode === VIEW_MODES.UNAVAILABLE) {
-    // 画面がまだ描画されていないだけの可能性がある。サマリーすら無い場合は
-    // 「計算できません」と言い切らずに黙って待つ（読み込み中のちらつき防止）。
-    const pageIsRendered = findSummaryContainer(document) !== null;
-    if (!pageIsRendered) {
-      return;
-    }
-    fshRenderCard(
-      buildCardModel({ viewMode: extracted.viewMode, aggregate: null, summary: extracted.summary })
-    );
-    return;
-  }
-
+  // 所定を計算できない画面では rows が空になり、分数は出ずに freee の表示値だけが並ぶ。
   const aggregate = aggregateAttendance(extracted.rows, {
     fallbackDailyMinutes: fshSettings.fallbackDailyMinutes,
     workedMinutesOverride: extracted.workedMinutesOverride,
     workedDaysOverride: extracted.workedDaysOverride,
   });
 
-  fshRenderCard(
-    buildCardModel({
-      viewMode: extracted.viewMode,
-      aggregate,
-      summary: extracted.summary,
-      schedulePatternHint: extracted.schedulePatternHint,
-      unknownRowCount: extracted.unknownRows.length,
-    })
-  );
+  fshRenderSummaryRow(summary, summaryItems, aggregate);
 }
 
 /**
@@ -315,8 +309,8 @@ function fshStartObserver() {
     if (fshIsRendering) {
       return;
     }
-    // 自分のカード内の変更しか無い場合は再計算しない（無限ループ防止）。
-    const isRelevant = mutations.some((mutation) => !fshIsInsideCard(mutation.target));
+    // 自分が差し込んだ DOM 内の変更しか無い場合は再計算しない（無限ループ防止）。
+    const isRelevant = mutations.some((mutation) => !fshIsOwnNode(mutation.target));
     if (isRelevant) {
       fshScheduleRecalculate();
     }

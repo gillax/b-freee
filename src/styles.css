@@ -1,55 +1,20 @@
 /*
- * styles.css — 差し込むカードのスタイルと設定ページのスタイル
+ * styles.css — 差し込むコピー行のスタイルと設定ページのスタイル
  *
  * すべてのクラスに fsh-（freee scheduled hours）プレフィックスを付け、
  * 要素セレクタ（div, ul, … 単独）は一切使わない。freee 側の見た目に
  * 影響を与えないようにするため。
  *
- * 逆に、freee 側のリセット CSS でカードが崩れないよう、必要なプロパティは
- * すべて明示する（list-style や margin を継承に任せない）。
+ * 逆に、freee 側のリセット CSS でコピー行が崩れないよう、必要なプロパティは
+ * すべて明示する（margin や font を継承に任せない）。
  */
 
-.fsh-card {
-  box-sizing: border-box;
-  margin: 12px 0;
-  padding: 14px 16px;
-  border: 1px solid #d8dde3;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #1a2733;
-  font-family: inherit;
-  font-size: 13px;
-  line-height: 1.6;
-  text-align: left;
-}
-
-.fsh-card * {
-  box-sizing: border-box;
-}
-
-.fsh-card__title {
-  margin: 0 0 10px;
-  padding: 0;
-  border: 0;
-  color: #5b6b7c;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.fsh-card__grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  margin: 0;
-  padding: 0;
-}
-
+/* コピー行の 1 項目（ラベルの下に値）。 */
 .fsh-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 160px;
+  min-width: 0;
 }
 
 .fsh-item__label {
@@ -65,8 +30,7 @@
   white-space: nowrap;
 }
 
-/* 分数の分母（"20 日 / 22 日" の右側）は分子より控えめにする。空白 " / " を
-   目印にした ::part は使えないので、テキスト全体を color で表現する。 */
+/* 「実績 / 所定」の分数だけ色を付ける（mirror 項目は tone: plain で色なし）。 */
 .fsh-item--remaining .fsh-item__value {
   color: #0b6e8a;
 }
@@ -74,40 +38,47 @@
   color: #b4442f;
 }
 
-.fsh-card__message {
-  margin: 0;
-  padding: 0;
-  color: #6b7a89;
+/* ---------------------------------------------------------------------------
+ * freee サマリーのコピー行（#fsh-summary）
+ *
+ * 並び順は render.js の SUMMARY_ROW_ITEMS が持つ。ここは横一列に並べ、
+ * 値を折り返さない（「20 日 / 22 日」を 1 行で読ませる）ことだけを担当する。
+ * ------------------------------------------------------------------------ */
+
+.fsh-summary {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 28px;
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid #d8dde3;
+  border-radius: 8px;
+  background: #f7f9fa;
+  color: #1a2733;
+  font-family: inherit;
   font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
 }
 
-.fsh-card__meta,
-.fsh-card__notes {
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
+.fsh-summary * {
+  box-sizing: border-box;
 }
 
-.fsh-card__meta > li,
-.fsh-card__notes > li {
-  margin: 2px 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fsh-card__meta > li {
-  color: #5b6b7c;
+.fsh-summary__toggle {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid #c6cdd5;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #45525f;
+  font-family: inherit;
   font-size: 11px;
-}
-
-.fsh-card__notes {
-  padding-top: 8px;
-  border-top: 1px solid #eef1f4;
-}
-
-.fsh-card__notes > li {
-  color: #7a8794;
-  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 /* ---------------------------------------------------------------------------

@@ -41,8 +41,11 @@ async function save() {
   }
 
   try {
-    await chrome.storage.local.set({ [STORAGE_KEY]: { fallbackDailyMinutes: parsed.minutes } });
-    input.value = formatSettingsForInput({ fallbackDailyMinutes: parsed.minutes });
+    // 勤怠画面のトグルで保存された折りたたみ状態を消さないよう、保存済みの設定に重ねる。
+    const stored = await chrome.storage.local.get(STORAGE_KEY);
+    const settings = { ...normalizeSettings(stored[STORAGE_KEY]), fallbackDailyMinutes: parsed.minutes };
+    await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+    input.value = formatSettingsForInput(settings);
     showStatus('保存しました。開いている勤怠画面にも自動で反映されます。', 'ok');
   } catch (error) {
     showStatus(`保存できませんでした: ${error.message}`, 'error');

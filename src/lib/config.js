@@ -23,9 +23,14 @@ const STORAGE_KEY = 'settings';
  * fallbackDailyMinutes は「勤務予定セルから 1 日の所定労働時間を算出できなかった
  * 場合」にのみ使われる。通常は勤務予定（例 09:00-18:00 − 休憩 1:00）から算出されるため
  * 出番はない。
+ *
+ * collapseSummary は freee の元サマリーを折りたたむかどうか。並べ替えたコピー行
+ * （content.js の #fsh-summary）を出すのが目的なので、既定では折りたたむ。
+ * 画面上のトグルで切り替えられ、その状態がここに保存される。
  */
 const DEFAULT_SETTINGS = Object.freeze({
   fallbackDailyMinutes: 8 * 60,
+  collapseSummary: true,
 });
 
 /**
@@ -48,6 +53,10 @@ function normalizeSettings(raw) {
     if (parsed !== null) {
       settings.fallbackDailyMinutes = clampDailyMinutes(parsed);
     }
+  }
+
+  if (typeof raw.collapseSummary === 'boolean') {
+    settings.collapseSummary = raw.collapseSummary;
   }
 
   return settings;

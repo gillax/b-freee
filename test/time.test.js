@@ -10,7 +10,6 @@ const {
   parseClockToMinutes,
   parseScheduleRange,
   formatHoursMinutes,
-  formatJapaneseDuration,
 } = require('../src/lib/time.js');
 
 // ---------------------------------------------------------------------------
@@ -158,15 +157,8 @@ test('formatHoursMinutes: 60 進表記', () => {
   assert.equal(formatHoursMinutes(-70), '-1:10');
 });
 
-test('formatJapaneseDuration: freee のサマリー表記に合わせる', () => {
-  assert.equal(formatJapaneseDuration(550), '9時間10分');
-  assert.equal(formatJapaneseDuration(480), '8時間0分');
-  assert.equal(formatJapaneseDuration(0), '0時間0分');
-  assert.equal(formatJapaneseDuration(-90), '-1時間30分');
-});
-
 test('整形関数: 数値でない入力は空文字（表示を壊さない）', () => {
   assert.equal(formatHoursMinutes(NaN), '');
   assert.equal(formatHoursMinutes(undefined), '');
-  assert.equal(formatJapaneseDuration(Infinity), '');
+  assert.equal(formatHoursMinutes(Infinity), '');
 });

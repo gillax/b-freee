@@ -51,8 +51,10 @@ function loadAsContentScript() {
     `${source}
     return {
       normalizeSettings, STORAGE_KEY, DEFAULT_SETTINGS,
-      aggregateAttendance, extractAttendance, buildCardModel,
+      aggregateAttendance, extractAttendance,
       VIEW_MODES, formatHoursMinutes, findSummaryContainer,
+      isInjected, readSummaryItems, summaryRowLabels, buildSummaryRowModel,
+      INJECTED_ATTRIBUTE,
     };`
   );
 
@@ -77,49 +79,62 @@ test('require が無い環境（content script）でもグローバル参照だ�
     'normalizeSettings',
     'aggregateAttendance',
     'extractAttendance',
-    'buildCardModel',
     'formatHoursMinutes',
     'findSummaryContainer',
+    // コピー行（#fsh-summary）が content.js から使うもの
+    'isInjected',
+    'readSummaryItems',
+    'summaryRowLabels',
+    'buildSummaryRowModel',
   ]) {
     assert.equal(typeof api[name], 'function', `${name} が参照できること`);
   }
   assert.equal(typeof api.STORAGE_KEY, 'string');
+  assert.equal(api.INJECTED_ATTRIBUTE, 'data-fsh');
   assert.equal(api.DEFAULT_SETTINGS.fallbackDailyMinutes, 480);
+  // 既定では freee の元サマリーを折りたたむ
+  assert.equal(api.DEFAULT_SETTINGS.collapseSummary, true);
 });
 
-test('content script 経路でもフィクスチャから同じ結果が出る（22日 / 176:00 / 9:10）', () => {
+test('content script 経路でもフィクスチャから同じ結果が出る（22日 / 176:00 / 166:50）', () => {
   const api = loadAsContentScript();
   const doc = parseHtml(
     fs.readFileSync(path.join(ROOT, 'test-helpers/fixtures/table-standard.html'), 'utf8')
   );
 
+  // content.js と同じ順序：サマリー領域の特定 → 値の読み取り → 抽出 → 集計 → 表示モデル
   const settings = api.normalizeSettings(null);
-  const extracted = api.extractAttendance(doc);
+  const summary = api.findSummaryContainer(doc);
+  const summaryItems = api.readSummaryItems(summary, api.summaryRowLabels());
+  const extracted = api.extractAttendance(doc, summaryItems);
   const aggregate = api.aggregateAttendance(extracted.rows, {
     fallbackDailyMinutes: settings.fallbackDailyMinutes,
     workedMinutesOverride: extracted.workedMinutesOverride,
+    workedDaysOverride: extracted.workedDaysOverride,
   });
-  const model = api.buildCardModel({
-    viewMode: extracted.viewMode,
+  const model = api.buildSummaryRowModel({
     aggregate,
-    summary: extracted.summary,
-    schedulePatternHint: extracted.schedulePatternHint,
-    unknownRowCount: extracted.unknownRows.length,
+    summaryItems,
+    collapsed: settings.collapseSummary,
   });
 
   assert.equal(extracted.viewMode, api.VIEW_MODES.TABLE);
   assert.equal(aggregate.scheduledDays, 22);
   assert.equal(api.formatHoursMinutes(aggregate.scheduledMinutes), '176:00');
-  assert.equal(api.formatHoursMinutes(aggregate.remainingMinutes), '9:10');
-  assert.equal(model.available, true);
-  // 新しい表示形式：「労働日数 20 日 / 22 日」「総勤務時間 166:50 / 176:00」の 2 行
+  assert.equal(api.formatHoursMinutes(aggregate.workedMinutes), '166:50');
+
+  // コピー行の並び順と「実績 / 所定」の 1 行表示
   assert.deepEqual(
-    model.rows.map((row) => [row.label, row.value]),
+    model.items.map((item) => [item.label, item.value]),
     [
       ['労働日数', '20 日 / 22 日'],
       ['総勤務時間', '166:50 / 176:00'],
+      ['不足時間', '9:10'],
+      ['時間外労働', '9:30'],
     ]
   );
+  // 既定では freee の元サマリーを折りたたむ
+  assert.equal(model.collapsed, true);
 });
 
 test('設定ページが読み込むライブラリも require 無しで動く', () => {

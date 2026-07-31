@@ -176,23 +176,6 @@ function formatHoursMinutes(minutes) {
   return `${sign}${hours}:${String(rest).padStart(2, '0')}`;
 }
 
-/**
- * 分を "N時間M分" 形式に整形する（freee のサマリー表記に合わせる）。
- *
- * @param {number} minutes
- * @returns {string} 例: 550 → "9時間10分"、480 → "8時間0分"
- */
-function formatJapaneseDuration(minutes) {
-  if (!Number.isFinite(minutes)) {
-    return '';
-  }
-  const sign = minutes < 0 ? '-' : '';
-  const abs = Math.abs(Math.round(minutes));
-  const hours = Math.floor(abs / MINUTES_PER_HOUR);
-  const rest = abs % MINUTES_PER_HOUR;
-  return `${sign}${hours}時間${rest}分`;
-}
-
 // Node のテストから require するためのエクスポートガード。
 // 拡張の content script では module が undefined なのでこのブロックは実行されず、
 // 上記の関数は同一 isolated world 内のグローバルとして共有される。
@@ -207,6 +190,5 @@ if (typeof module !== 'undefined' && module.exports) {
     parseClockToMinutes,
     parseScheduleRange,
     formatHoursMinutes,
-    formatJapaneseDuration,
   };
 }

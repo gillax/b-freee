@@ -1,0 +1,119 @@
+<!--
+  サマリー項目が一通り揃ったケース：コピー行（並べ替え）の検証用
+
+  実画面のサマリーは「労働日数 / 総勤務時間 / 所定内労働 / 時間外労働 / 法定休日労働 /
+  深夜労働 / 欠勤日数 / 有休取得数 / 有休残数 / 遅刻早退時間 / 不足時間」の順に並ぶ。
+  この並びをコピー行でどう組み替えるかを確認するためのフィクスチャ。
+
+  ラベルの前に付く凡例の色記号（■ / □）と、ヘルプアイコンの "?" もそのまま入れて、
+  ラベル判定と値の読み取りがそれらに引きずられないことを確かめる。
+
+  数値の整合：所定 3 日 × 8:00 = 24:00 / 総勤務 15:00（8:00 + 半休の 7:00）/ 不足 9:00
+-->
+<body>
+  <div class="vb-page">
+    <header class="vb-pageHeader">
+      <h1 class="vb-pageHeader__title">勤怠</h1>
+      <p class="vb-pageHeader__period">2026年8月20日払い（2026年7月1日 〜 2026年7月3日 勤務分）</p>
+    </header>
+
+    <section class="vb-summary">
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">労働日数</span>
+        <span class="vb-summary__help">?</span>
+        <span class="vb-summary__value">2日</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">総勤務時間</span>
+        <span class="vb-summary__value">15時間0分</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">■所定内労働</span>
+        <span class="vb-summary__value">15時間0分</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">■時間外労働</span>
+        <span class="vb-summary__value">0時間</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">■法定休日労働</span>
+        <span class="vb-summary__value">0時間</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">■深夜労働</span>
+        <span class="vb-summary__value">0時間</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">□欠勤日数</span>
+        <span class="vb-summary__help">?</span>
+        <span class="vb-summary__value">0日</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">□有休取得数</span>
+        <span class="vb-summary__value">0.5日</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">有休残数</span>
+        <span class="vb-summary__value">22.5日</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">遅刻早退時間</span>
+        <span class="vb-summary__help">?</span>
+        <span class="vb-summary__value">0時間</span>
+      </div>
+      <div class="vb-summary__item">
+        <span class="vb-summary__label">不足時間</span>
+        <span class="vb-summary__value">9時間0分</span>
+      </div>
+    </section>
+
+    <div class="vb-tableWrapper">
+      <table class="vb-table">
+        <thead>
+          <tr class="vb-table__row">
+            <th class="vb-table__head" scope="col">日付</th>
+            <th class="vb-table__head" scope="col">勤務日種別</th>
+            <th class="vb-table__head" scope="col">勤務予定</th>
+            <th class="vb-table__head" scope="col">勤怠種別</th>
+            <th class="vb-table__head" scope="col">所定内</th>
+            <th class="vb-table__head" scope="col">時間外</th>
+            <th class="vb-table__head" scope="col">休憩</th>
+            <th class="vb-table__head" scope="col">総勤務</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/01(水)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">通常勤務</td>
+            <td class="vb-table__cell">8:00</td>
+            <td class="vb-table__cell">0:00</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">8:00</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/02(木)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">有休（半休）</td>
+            <td class="vb-table__cell">7:00</td>
+            <td class="vb-table__cell">0:00</td>
+            <td class="vb-table__cell">1:00</td>
+            <td class="vb-table__cell">7:00</td>
+          </tr>
+          <tr class="vb-table__row">
+            <td class="vb-table__cell">07/03(金)</td>
+            <td class="vb-table__cell">所定労働日</td>
+            <td class="vb-table__cell">09:00-18:00</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+            <td class="vb-table__cell">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>

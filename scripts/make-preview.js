@@ -3,7 +3,7 @@
 // dev/preview.html を再生成する。
 //
 // フィクスチャ（test-helpers/fixtures/*.html）を埋め込んだ 1 枚の HTML を作り、
-// 実サイトにアクセスせずにカードの見た目と再描画時の挙動を確認できるようにする。
+// 実サイトにアクセスせずにコピー行の見た目と再描画時の挙動を確認できるようにする。
 // file:// で開くため fetch が使えないので、フィクスチャは埋め込む方式にしている。
 //
 // フィクスチャを更新したら再実行する:
@@ -20,7 +20,11 @@ const FIXTURES = [
   ['table-over-scheduled.html', 'テーブル表示・超過（160:00 に対して 165:30）'],
   ['table-mixed-schedule.html', 'テーブル表示・勤務予定が混在（通常 15 日 + 時短 7 日）'],
   ['table-holidays-only.html', 'テーブル表示・休日のみ（所定 0 日）'],
-  ['calendar-view.html', 'カレンダー表示（サマリーの総勤務時間から概算）'],
+  // ラベルにサマリーのラベル文字列（「総勤務時間」など）を入れないこと。
+  // プルダウンのテキストも body のテキストなので、extract.js が freee の表示として
+  // 拾ってしまい、プレビューでだけ値が読めなくなる。
+  ['calendar-view.html', 'カレンダー表示（サマリーの合計から概算）'],
+  ['summary-full.html', 'サマリー項目が一通り揃った画面（コピー行の並び替え）'],
 ];
 
 /**
@@ -46,7 +50,7 @@ const page = `<!doctype html>
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <title>freee 所定労働時間カード — ローカルプレビュー</title>
+    <title>freee 勤怠サマリー並べ替え — ローカルプレビュー</title>
     <link rel="stylesheet" href="../src/styles.css" />
     <style>
       body {
@@ -145,13 +149,20 @@ ${options}
 
     <script>
       // content.js が触る chrome.storage を最小限スタブする（拡張機能の外で動かすため）。
-      // ここで設定値を変えるとフォールバック値の挙動も確認できる。
+      // メモリ上に保持するだけなので、折りたたみの切り替えはページを開いている間だけ残る。
+      const storage = {};
       window.chrome = {
         storage: {
           local: {
-            get: () => Promise.resolve({}),
-            set: () => Promise.resolve(),
-            remove: () => Promise.resolve(),
+            get: () => Promise.resolve({ ...storage }),
+            set: (items) => {
+              Object.assign(storage, items);
+              return Promise.resolve();
+            },
+            remove: (key) => {
+              delete storage[key];
+              return Promise.resolve();
+            },
           },
           onChanged: { addListener: () => {} },
         },
@@ -168,8 +179,9 @@ ${options}
       }
 
       function updateCount() {
-        const cards = document.querySelectorAll('#fsh-card').length;
-        count.textContent = 'カードの枚数: ' + cards + (cards === 1 ? '（冪等 OK）' : '（要確認）');
+        const rows = document.querySelectorAll('#fsh-summary').length;
+        count.textContent =
+          'コピー行: ' + rows + ' 行' + (rows === 1 ? '（冪等 OK）' : '（要確認）');
       }
 
       select.addEventListener('change', load);

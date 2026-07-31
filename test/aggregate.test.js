@@ -5,7 +5,6 @@ const assert = require('node:assert/strict');
 
 const {
   DAY_TYPE_LABELS,
-  WARNING_CODES,
   isScheduledWorkday,
   isHoliday,
   modeOf,
@@ -24,12 +23,10 @@ const { formatHoursMinutes } = require('../src/lib/time.js');
  */
 function row(overrides = {}) {
   return {
-    dateLabel: '',
     dayType: DAY_TYPE_LABELS.WORKDAY,
     scheduleText: '09:00-18:00',
     breakText: '1:00',
     workedText: '',
-    attendanceTypeText: '',
     ...overrides,
   };
 }
@@ -130,15 +127,15 @@ test('buildScheduleGroups: 勤務予定が混在する場合はグループご�
 // ---------------------------------------------------------------------------
 // aggregateAttendance — 実地検証済みのケース
 // 所定労働日 22 日 / 勤務予定 09:00-18:00 / 休憩 1:00 / 総勤務合計 166:50
-//   → 所定 176:00、残り 9:10（freee 表示の「不足時間 9時間10分」と一致）
+//   → 所定 176:00（freee 表示の「不足時間 9時間10分」と差が一致）
 // ---------------------------------------------------------------------------
 
-test('aggregateAttendance: 検証済みケース（22日・176:00・残り9:10）', () => {
+test('aggregateAttendance: 検証済みケース（22日・176:00・実績 166:50）', () => {
   const attendance = [
     // 通常勤務 19 日（8:30 = 510 分）
     ...rows(19, { workedText: '8:30' }),
-    // 半休 1 日（実働 + 有休分が所定内に計上されて総勤務に乗る）
-    row({ workedText: '5:20', attendanceTypeText: '有休（半休）' }),
+    // 半休 1 日（実働 + 有休分が所定内に計上されて総勤務に乗るので特別扱いは不要）
+    row({ workedText: '5:20' }),
     // これから入力する（未打刻の）所定労働日 2 日
     ...rows(2, { workedText: '' }),
     // 休日 9 日（所定休日 5・法定休日 4）は所定にも総勤務にも影響しない
@@ -148,32 +145,19 @@ test('aggregateAttendance: 検証済みケース（22日・176:00・残り9:10�
 
   const result = aggregateAttendance(attendance, { fallbackDailyMinutes: 480 });
 
-  assert.equal(result.totalRows, 31);
   assert.equal(result.scheduledDays, 22);
-  assert.equal(result.holidayDays, 9);
-  assert.equal(result.scheduledMinutes, 10560);
   assert.equal(formatHoursMinutes(result.scheduledMinutes), '176:00');
-  assert.equal(result.workedMinutes, 10010);
   assert.equal(formatHoursMinutes(result.workedMinutes), '166:50');
-  assert.equal(result.isOver, false);
-  assert.equal(result.remainingMinutes, 550);
-  assert.equal(formatHoursMinutes(result.remainingMinutes), '9:10');
-
-  // 内訳
-  assert.equal(result.workedDays, 20);
-  assert.equal(result.missingWorkedDays, 2);
-  assert.equal(result.halfDayCount, 1);
-  assert.equal(result.scheduleGroups.length, 1);
-
-  // 注意点：未入力の日があることだけを警告し、フォールバックは使っていない
-  assert.deepEqual(result.warnings, [WARNING_CODES.MISSING_WORKED_ENTRIES]);
+  assert.equal(result.workedDays, 20); // 未入力の 2 日は数えない
+  // 所定 − 総勤務 = 9:10 は freee 表示の「不足時間 9時間10分」と一致する
+  assert.equal(formatHoursMinutes(result.scheduledMinutes - result.workedMinutes), '9:10');
 });
 
 // ---------------------------------------------------------------------------
 // aggregateAttendance — その他のケース
 // ---------------------------------------------------------------------------
 
-test('aggregateAttendance: 休日のみの月は所定 0 日・残り 0（警告つき）', () => {
+test('aggregateAttendance: 休日のみの月は所定 0 日', () => {
   const attendance = [
     ...rows(6, { dayType: '所定休日', scheduleText: '', breakText: '', workedText: '' }),
     ...rows(4, { dayType: '法定休日', scheduleText: '', breakText: '', workedText: '' }),
@@ -184,13 +168,10 @@ test('aggregateAttendance: 休日のみの月は所定 0 日・残り 0（警告
   assert.equal(result.scheduledDays, 0);
   assert.equal(result.scheduledMinutes, 0);
   assert.equal(result.workedMinutes, 0);
-  assert.equal(result.remainingMinutes, 0);
-  assert.equal(result.isOver, false);
-  assert.equal(result.scheduleGroups.length, 0);
-  assert.ok(result.warnings.includes(WARNING_CODES.NO_SCHEDULED_WORKDAYS));
+  assert.equal(result.workedDays, 0);
 });
 
-test('aggregateAttendance: 全日入力済みで超過している月は符号を反転して超過扱い', () => {
+test('aggregateAttendance: 全日入力済みで所定を超過している月', () => {
   // 所定 20 日 × 8:00 = 160:00、総勤務 19 日 × 8:00 + 1 日 13:30 = 165:30
   const attendance = [
     ...rows(19, { workedText: '8:00' }),
@@ -203,11 +184,9 @@ test('aggregateAttendance: 全日入力済みで超過している月は符号�
   assert.equal(result.scheduledDays, 20);
   assert.equal(formatHoursMinutes(result.scheduledMinutes), '160:00');
   assert.equal(formatHoursMinutes(result.workedMinutes), '165:30');
-  assert.equal(result.differenceMinutes, -330);
-  assert.equal(result.isOver, true);
-  assert.equal(formatHoursMinutes(result.remainingMinutes), '5:30');
-  assert.equal(result.missingWorkedDays, 0);
-  assert.equal(result.warnings.includes(WARNING_CODES.MISSING_WORKED_ENTRIES), false);
+  // 総勤務が所定を 5:30 上回る
+  assert.equal(result.workedMinutes - result.scheduledMinutes, 330);
+  assert.equal(result.workedDays, 20);
 });
 
 test('aggregateAttendance: 勤務予定が混在する月は行単位で所定を合算する', () => {
@@ -223,13 +202,10 @@ test('aggregateAttendance: 勤務予定が混在する月は行単位で所定�
   assert.equal(result.scheduledDays, 20);
   assert.equal(formatHoursMinutes(result.scheduledMinutes), '150:00');
   assert.equal(formatHoursMinutes(result.workedMinutes), '145:30');
-  assert.equal(formatHoursMinutes(result.remainingMinutes), '4:30');
-  assert.equal(result.isOver, false);
-  assert.equal(result.scheduleGroups.length, 2);
-  assert.ok(result.warnings.includes(WARNING_CODES.MULTIPLE_SCHEDULES));
+  assert.equal(formatHoursMinutes(result.scheduledMinutes - result.workedMinutes), '4:30');
 });
 
-test('aggregateAttendance: 休日出勤も総勤務に含め、その旨を警告する', () => {
+test('aggregateAttendance: 休日出勤も総勤務に含める（freee の不足時間と同じ挙動）', () => {
   const attendance = [
     ...rows(20, { workedText: '8:00' }),
     row({ dayType: '法定休日', scheduleText: '', breakText: '', workedText: '4:00' }),
@@ -239,8 +215,7 @@ test('aggregateAttendance: 休日出勤も総勤務に含め、その旨を警�
 
   assert.equal(result.scheduledDays, 20);
   assert.equal(formatHoursMinutes(result.workedMinutes), '164:00');
-  assert.equal(result.holidayWorkMinutes, 240);
-  assert.ok(result.warnings.includes(WARNING_CODES.HOLIDAY_WORK_INCLUDED));
+  assert.equal(result.workedDays, 21);
 });
 
 test('aggregateAttendance: 勤務予定が取れない月はフォールバック値（既定 8:00）を使う', () => {
@@ -248,7 +223,6 @@ test('aggregateAttendance: 勤務予定が取れない月はフォールバッ�
 
   const withDefault = aggregateAttendance(attendance);
   assert.equal(formatHoursMinutes(withDefault.scheduledMinutes), '80:00');
-  assert.ok(withDefault.warnings.includes(WARNING_CODES.FALLBACK_SCHEDULE_USED));
 
   // 設定で 7:45 に上書きした場合
   const withOverride = aggregateAttendance(attendance, { fallbackDailyMinutes: 465 });
