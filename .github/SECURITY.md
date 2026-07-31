@@ -11,7 +11,7 @@
   が空であることで確認できます。
 - **アナリティクス・テレメトリ・クラッシュレポートを送信しません。** 集計は
   すべてページ内の JavaScript で完結します。
-- **勤怠データを保存しません。** 読み取った値はカードを描画するためにメモリ上で
+- **勤怠データを保存しません。** 読み取った値はコピー行を描画するためにメモリ上で
   使うだけで、`chrome.storage` にも `localStorage` にも書きません。
   保存するのは設定値（1 日の所定労働時間のフォールバック値）だけです。
 - 設定値は `chrome.storage.local` にのみ保存します。`chrome.storage.sync` は
@@ -28,7 +28,7 @@
 | 権限 | 用途 |
 | --- | --- |
 | `permissions: ["storage"]` | 1 日の所定労働時間のフォールバック値を保存するため |
-| `host_permissions: ["https://p.secure.freee.co.jp/*"]` | 対象サイト以外では一切動かないことを明示するため |
+| `host_permissions` | **宣言していません**。宣言済みの content script は `matches` だけで注入され、この拡張は外部通信も `chrome.scripting` も使わないため不要です |
 | `content_scripts.matches: ["https://p.secure.freee.co.jp/attendances*"]` | 勤怠画面だけにスクリプトを注入するため |
 
 `tabs`、`activeTab`、`scripting`、`<all_urls>`、`webRequest`、`cookies` などは
@@ -40,7 +40,7 @@
   `innerHTML` は使いません（ページから読んだ文字列を HTML として解釈させないため）。
 - 追加する CSS クラスはすべて `fsh-` プレフィックス付きで、要素セレクタ
   （`div` や `ul` 単独）は使いません。freee 側の見た目には影響しません。
-- 再計算中は `MutationObserver` を一時停止し、自分が挿入したカード内の変更は
+- 再計算中は `MutationObserver` を一時停止し、自分が挿入した要素内の変更は
   無視します（無限ループと多重挿入の防止）。
 
 ## 対応バージョン
