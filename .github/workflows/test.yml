@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   test:
-    name: node --test
     runs-on: ubuntu-latest
     steps:
       # action は動くタグではなくコミット SHA で固定する。タグの付け替えや
